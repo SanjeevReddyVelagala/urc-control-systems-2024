@@ -20,7 +20,6 @@
 
 int main()
 {
-  sjsu::drivers::initialize_platform();
   sjsu::drivers::application();
   std::terminate();
 }

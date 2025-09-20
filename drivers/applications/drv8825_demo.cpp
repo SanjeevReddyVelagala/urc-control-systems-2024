@@ -15,11 +15,19 @@ void application()
   // configure drivers
   auto clock = resources::clock();
   auto terminal = resources::console();
-  auto dir_pin = resources::output_pin_3();
+  hal::print(*terminal , "clock initialized\n");
+  auto dir_pin = resources::output_pin_5();
+  hal::print(*terminal , "dir pin initialized\n");
   auto step_pin = resources::output_pin_4();
+  hal::print(*terminal , "step pin initialized\n");
   auto m1_pin = resources::output_pin_0();
-  auto m2_pin = resources::output_pin_1();
-  auto m3_pin = resources::output_pin_2();
+  hal::print(*terminal , "m0 pin initialized\n");
+  auto m2_pin = resources::output_pin_6();
+  hal::print(*terminal , "m1 pin initialized\n");
+  auto m3_pin = resources::output_pin_7();
+  hal::print(*terminal , "m2 pin initialized\n");
+
+
 
   drv8825 stepper_controller(
     drv8825::ctor_params{ .direction_pin = dir_pin,
@@ -34,9 +42,9 @@ void application()
 
   while (true) {
     stepper_controller.step(2048);
-    hal::delay(*clock, 1s);
+    hal::delay(*clock, 1ms);
     stepper_controller.step(-2048);
-    hal::delay(*clock, 1s);
+    hal::delay(*clock, 1ms);
   }
 }
 }  // namespace sjsu::drivers
