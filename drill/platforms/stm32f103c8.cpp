@@ -158,7 +158,7 @@ hal::v5::strong_ptr<hal::input_pin> input_pin_1()
     driver_allocator(), gpio_a().acquire_input_pin(15));
 }
 
-hal::v5::strong_ptr<hal::input_pin> input_pin_2()
+hal::v5::strong_ptr<hal::input_pin> fault()
 {
   return hal::v5::make_strong_ptr<decltype(gpio_b().acquire_input_pin(3))>(
     driver_allocator(), gpio_b().acquire_input_pin(3));
@@ -194,7 +194,6 @@ hal::v5::strong_ptr<hal::output_pin> step_pin()
   return hal::v5::make_strong_ptr<decltype(gpio_a().acquire_output_pin(8))>(
     driver_allocator(), gpio_a().acquire_output_pin(8));
 }
-
 
 hal::v5::strong_ptr<hal::output_pin> enbl()
 {
@@ -345,12 +344,12 @@ hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> make_rmd(uint16_t p_address)
 constexpr uint16_t drill_can_id = 0x150;
 
 hal::v5::optional_ptr<hal::actuator::rmd_mc_x_v2> drill_ptr;
-hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> drill()
+hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> drill_motor()
 {
   if (not drill_ptr) {
     try {
       auto terminal = console();
-      drill_ptr = make_rmd(0x150);
+      drill_ptr = make_rmd(drill_can_id);
       hal::print(*terminal, "Drill Motor CAN ID set %d\n");
       drill_ptr->velocity_control(0);
       hal::print(*terminal, "Velocity Set to Zero %d\n");

@@ -34,7 +34,7 @@ hal::v5::strong_ptr<hal::serial> console();
 hal::v5::strong_ptr<hal::output_pin> status_led();
 hal::v5::strong_ptr<hal::can_transceiver> can_transceiver();
 hal::v5::strong_ptr<hal::can_bus_manager> can_bus_manager();
-hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> drill();
+hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> drill_motor();
 hal::v5::strong_ptr<hal::i2c> i2c();
 hal::v5::strong_ptr<hal::output_pin> m0_pin();
 hal::v5::strong_ptr<hal::output_pin> m1_pin();
@@ -42,6 +42,7 @@ hal::v5::strong_ptr<hal::output_pin> m2_pin();
 hal::v5::strong_ptr<hal::output_pin> dir_pin();
 hal::v5::strong_ptr<hal::output_pin> step_pin();
 hal::v5::strong_ptr<hal::output_pin> enbl();
+hal::v5::strong_ptr<hal::input_pin> fault();
 
 inline void reset()
 {

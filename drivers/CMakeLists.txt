@@ -30,6 +30,7 @@ DEMOS
   tla2528_analog_input_demo
   serial_commands_demo
   adc1283_demo
+  ultrasonic_sensor_hcsr04_demo
 
 INCLUDES
   include

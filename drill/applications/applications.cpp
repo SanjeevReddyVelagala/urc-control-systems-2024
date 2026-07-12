@@ -41,6 +41,9 @@ void application()
     auto enbl = resources::enbl();
     hal::print(*terminal, " enbl \n");
 
+    auto fault = resources::fault();
+    hal::print(*terminal, "fault \n");
+
     enbl->level(0);
 
     auto manager = resources::can_bus_manager();
@@ -71,21 +74,20 @@ void application()
 
     // sjsu::drivers::sht21 m_sht21 = sjsu::drivers::sht21(i2c);
 
-    drill_class drill_class(
-      // resources::drill(),
+    drill_class drill(
+      // resources::drill_motor(),
       clock,
       stepper_controller);  // add , m_sht21 when i2c works
 
     while (true) {
-      // hal::delay(*clock, 5000ms);
-      // resources::drill->velocity_control(20.0);
-      // hal::delay(*clock, 5000ms);
-      // resources::drill->velocity_control(-20.0);
-      stepper_controller.step(2400);
-      hal::print(*terminal, "going up\n");
+      // drill.set_velocity();
+      drill.set_stepper(2400);
+      hal::print<64>(*terminal, "dir level going up: %d\n", dir_pin->level());
+      hal::print<64>(*terminal, "fault level: %d\n", fault->level());
       hal::delay(*clock, 5000ms);
-      stepper_controller.step(-2400);
-      hal::print(*terminal, "going down\n");
+      drill.set_stepper(-2400);
+      hal::print<64>(*terminal, "dir level going down: %d\n", dir_pin->level());
+      hal::print<64>(*terminal, "fault level: %d\n", fault->level());
       hal::delay(*clock, 5000ms);
     }
   }

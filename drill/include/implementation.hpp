@@ -19,14 +19,15 @@ public:
     // hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> motor,
     hal::v5::strong_ptr<hal::steady_clock> clock,
     sjsu::drivers::drv8825 step_motor_driver
-    // ,sjsu::drivers::sht21 soil_sensor
+    // sjsu::drivers::sht21 soil_sensor
 
   );
 
   // void stop();
 
-  // void set_velocity(int rpm);
+  // void set_velocity();
 
+  void set_stepper(long steps);
   // rf
 
 private:
@@ -34,6 +35,5 @@ private:
   hal::v5::strong_ptr<hal::steady_clock> m_clock;
   sjsu::drivers::drv8825 m_stepper_driver;
   // sjsu::drivers::sht21 m_soil_sensor;
-  bool direction = true;
 };
 }  // namespace sjsu::drill
