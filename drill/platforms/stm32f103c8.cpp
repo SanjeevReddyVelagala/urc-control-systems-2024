@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <libhal-actuator/smart_servo/rmd/mc_x_v2.hpp>
+#include <chrono>
+#include <libhal-actuator/smart_servo/rmd/drc_v2.hpp>
 #include <libhal-arm-mcu/dwt_counter.hpp>
 #include <libhal-arm-mcu/startup.hpp>
 #include <libhal-arm-mcu/stm32f1/adc.hpp>
@@ -21,7 +22,6 @@
 #include <libhal-arm-mcu/stm32f1/clock.hpp>
 #include <libhal-arm-mcu/stm32f1/constants.hpp>
 #include <libhal-arm-mcu/stm32f1/gpio.hpp>
-#include <libhal-arm-mcu/stm32f1/independent_watchdog.hpp>
 #include <libhal-arm-mcu/stm32f1/input_pin.hpp>
 #include <libhal-arm-mcu/stm32f1/output_pin.hpp>
 #include <libhal-arm-mcu/stm32f1/pin.hpp>
@@ -42,6 +42,7 @@
 
 #include <../resource_list.hpp>
 #include <libhal/pointers.hpp>
+#include <memory_resource>
 
 namespace sjsu::drill::resources {
 
@@ -50,7 +51,7 @@ using st_peripheral = hal::stm32f1::peripheral;
 
 std::pmr::polymorphic_allocator<> driver_allocator()
 {
-  static std::array<hal::byte, 2048> driver_memory{};
+  static std::array<hal::byte, 4096> driver_memory{};
   static std::pmr::monotonic_buffer_resource resource(
     driver_memory.data(),
     driver_memory.size(),
@@ -269,6 +270,8 @@ hal::v5::strong_ptr<hal::pwm_group_manager> pwm_frequency()
 // added from drive BELOW
 
 hal::v5::optional_ptr<hal::stm32f1::can_peripheral_manager_v2> can_manager;
+std::array<hal::v5::optional_ptr<hal::can_mask_filter>, 2> can_mask;
+
 void initialize_can()
 {
   if (not can_manager) {
@@ -282,47 +285,31 @@ void initialize_can()
         *clock_ref,
         std::chrono::milliseconds(1),
         hal::stm32f1::can_pins::pb9_pb8);
-    can_manager->baud_rate(1.0_MHz);
   }
+
+  auto f = hal::acquire_can_mask_filter(driver_allocator(), can_manager);
+  hal::can_mask_filter::pair p;
+  p.id = 0;
+  p.mask = 0;
+  can_mask[0] = f[0];
+  can_mask[1] = f[1];
+  can_mask.at(0)->allow(p);
 }
 
-// set to 4 since not filters have been made yet
-unsigned int can_filters_index = 0;
-std::array<hal::v5::optional_ptr<hal::can_identifier_filter>, 8>
-  can_identifier_filters;
-hal::v5::strong_ptr<hal::can_identifier_filter> get_new_can_filter()
-{
-  if (can_filters_index >= can_identifier_filters.size()) {
-    throw hal::unknown(nullptr);  // TODO: look for better exception
-  }
-  if (can_filters_index % 4 == 0) {
-    initialize_can();
-    auto filter_batch =
-      hal::acquire_can_identifier_filter(driver_allocator(), can_manager);
-    for (unsigned int i = 0; i < filter_batch.size(); i++) {
-      can_identifier_filters[i + can_filters_index] = filter_batch[i];
-    }
-  }
-  auto can_id_filter = can_identifier_filters[can_filters_index];
-  can_filters_index++;
-  return can_id_filter;
-}
-
-hal::v5::optional_ptr<hal::can_transceiver> can_transceiver_ptr;
 hal::v5::strong_ptr<hal::can_transceiver> can_transceiver()
 {
   initialize_can();
-  if (not can_transceiver_ptr) {
-    can_transceiver_ptr =
-      hal::acquire_can_transceiver(driver_allocator(), can_manager);
-  }
-  return can_transceiver_ptr;
+  return hal::acquire_can_transceiver(driver_allocator(), can_manager);
 }
 
 hal::v5::optional_ptr<hal::can_bus_manager> can_bus_manager_ptr;
 hal::v5::strong_ptr<hal::can_bus_manager> can_bus_manager()
 {
+  auto console_ref = console();
+  hal::print(*console_ref, "intiallizeing can");
   initialize_can();
+  hal::delay(*clock_ptr, std::chrono::milliseconds(10));
+  hal::print(*console_ref, "intialized can");
   if (not can_bus_manager_ptr) {
     can_bus_manager_ptr =
       hal::acquire_can_bus_manager(driver_allocator(), can_manager);
@@ -330,37 +317,39 @@ hal::v5::strong_ptr<hal::can_bus_manager> can_bus_manager()
   return can_bus_manager_ptr;
 }
 
-hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> make_rmd(uint16_t p_address)
+hal::v5::strong_ptr<hal::can_identifier_filter> can_identifier_filter()
 {
-  auto console_ref = resources::console();
-  auto clock_ref = resources::clock();
-  auto transceiver = resources::can_transceiver();
-  auto idf = get_new_can_filter();
-  return hal::v5::make_strong_ptr<hal::actuator::rmd_mc_x_v2>(
-    driver_allocator(), *transceiver, *idf, *clock_ref, 36.0f, p_address);
+  initialize_can();
+  return hal::acquire_can_identifier_filter(driver_allocator(), can_manager)[0];
 }
 
-// INSERT CAN_ID OF THE DRILL RMD
-constexpr uint16_t drill_can_id = 0x150;
-
+constexpr uint16_t drill_id = 0x144;
 hal::v5::optional_ptr<hal::actuator::rmd_mc_x_v2> drill_ptr;
 hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> drill_motor()
 {
-  if (not drill_ptr) {
-    try {
-      auto terminal = console();
-      drill_ptr = make_rmd(drill_can_id);
-      hal::print(*terminal, "Drill Motor CAN ID set %d\n");
-      drill_ptr->velocity_control(0);
-      hal::print(*terminal, "Velocity Set to Zero %d\n");
+  auto console_ref = console();
 
-    } catch (hal::exception e) {
-      auto console_ref = console();
-      print<64>(
-        *console_ref, "Drill RMD failed, error code: %d\n", e.error_code());
-      throw e;
-    }
+  if (not drill_ptr) {
+    auto transceiver = can_transceiver();
+    hal::print(*console_ref, "can_transceiver initialized \n");
+
+    auto identifier_filter = can_identifier_filter();
+    hal::print(*console_ref, "can_identifier filter initialized \n");
+
+    auto clock_ref = clock();
+    hal::print(*console_ref, "clock initialized \n");
+
+    drill_ptr =
+      hal::v5::make_strong_ptr<hal::actuator::rmd_mc_x_v2>(driver_allocator(),
+                                                           *transceiver,
+                                                           *identifier_filter,
+                                                           *clock_ref,
+                                                           36.0f,
+                                                           drill_id);
+
+    hal::print(*console_ref, "drill_ptr assigned\n");
   }
+
   return drill_ptr;
 }
 
