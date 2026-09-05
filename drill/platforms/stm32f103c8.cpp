@@ -281,7 +281,7 @@ void initialize_can()
         driver_allocator(),
         32,
         driver_allocator(),
-        100'000,
+        1'000'000,
         *clock_ref,
         std::chrono::milliseconds(1),
         hal::stm32f1::can_pins::pb9_pb8);
@@ -323,7 +323,7 @@ hal::v5::strong_ptr<hal::can_identifier_filter> can_identifier_filter()
   return hal::acquire_can_identifier_filter(driver_allocator(), can_manager)[0];
 }
 
-constexpr uint16_t drill_id = 0x144;
+constexpr uint16_t drill_id = 0x141;
 hal::v5::optional_ptr<hal::actuator::rmd_mc_x_v2> drill_ptr;
 hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> drill_motor()
 {
@@ -345,7 +345,8 @@ hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> drill_motor()
                                                            *identifier_filter,
                                                            *clock_ref,
                                                            36.0f,
-                                                           drill_id);
+                                                           drill_id,
+                                                           std::chrono::milliseconds(1));
 
     hal::print(*console_ref, "drill_ptr assigned\n");
   }
