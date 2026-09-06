@@ -27,7 +27,7 @@ void application()
                           .steady_clock = clock,
                           .motor_step_factor = drv8825::step_factor::one,
                           .full_steps_per_rotation = 2048,
-                          .step_half_period = 450us,
+                          .step_half_period = 225us,
                           .mode_pins = { m1_pin, m2_pin, m3_pin } });  // TODO
 
   hal::print(*terminal, "starting motor\n");

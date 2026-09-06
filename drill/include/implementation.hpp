@@ -3,6 +3,7 @@
 #include "../../drivers/include/drv8825.hpp"
 #include "../../drivers/include/soil_sensor_sht21.hpp"
 #include <cmath>
+#include <libhal-actuator/smart_servo/rmd/drc_v2.hpp>
 #include <libhal-actuator/smart_servo/rmd/mc_x_v2.hpp>
 #include <libhal/pointers.hpp>
 #include <libhal/serial.hpp>
@@ -16,7 +17,7 @@ class drill_class
 public:
   drill_class(
 
-    // hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> motor,
+    hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> motor,
     hal::v5::strong_ptr<hal::steady_clock> clock,
     sjsu::drivers::drv8825 step_motor_driver
     // sjsu::drivers::sht21 soil_sensor
@@ -25,13 +26,12 @@ public:
 
   // void stop();
 
-  // void set_velocity();
-
+  void spin_drill();
   void set_stepper(long steps);
   // rf
 
 private:
-  // hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> m_drill;
+  hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> m_drill;
   hal::v5::strong_ptr<hal::steady_clock> m_clock;
   sjsu::drivers::drv8825 m_stepper_driver;
   // sjsu::drivers::sht21 m_soil_sensor;

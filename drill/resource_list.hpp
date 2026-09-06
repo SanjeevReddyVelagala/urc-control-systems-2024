@@ -1,5 +1,6 @@
 #pragma once
 
+#include <libhal-actuator/smart_servo/rmd/drc_v2.hpp>
 #include <libhal-actuator/smart_servo/rmd/mc_x_v2.hpp>
 #include <libhal-arm-mcu/stm32f1/can.hpp>
 #include <libhal-arm-mcu/stm32f1/can2.hpp>
@@ -34,8 +35,9 @@ hal::v5::strong_ptr<hal::serial> console();
 hal::v5::strong_ptr<hal::output_pin> status_led();
 hal::v5::strong_ptr<hal::can_transceiver> can_transceiver();
 hal::v5::strong_ptr<hal::can_bus_manager> can_bus_manager();
-hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> drill_motor();
+hal::v5::strong_ptr<hal::can_identifier_filter> can_identifier_filter();
 hal::v5::strong_ptr<hal::i2c> i2c();
+hal::v5::strong_ptr<hal::actuator::rmd_mc_x_v2> drill_motor();
 hal::v5::strong_ptr<hal::output_pin> m0_pin();
 hal::v5::strong_ptr<hal::output_pin> m1_pin();
 hal::v5::strong_ptr<hal::output_pin> m2_pin();
